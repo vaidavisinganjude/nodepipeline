@@ -1,0 +1,44 @@
+pipeline { 
+    agent any 
+    tools {
+        nodejs 'mynode'
+    }
+    
+    
+    stages { 
+        stage('git cloning') { 
+            steps {
+                echo 'cloning files from github' 
+            }
+        }
+        stage('Build') { 
+            steps { 
+                echo 'Building nodejs project' 
+            } 
+        } 
+        stage('Test') { 
+              steps { 
+                  echo 'Testing project' 
+                } 
+        } 
+        stage('Deploy') { 
+            steps { 
+                echo 'Deploying nodejs project on live server' 
+                script{
+                    sshagent(['091f3c47-5970-4153-b8f1-fbd337b56d97']) {
+                    sh ''' 
+                          ssh -o StrictHostKeyChecking=no ec2-user@13.201.40.141<<EOF 
+                          cd /home/ec2-user/nodejs-app/ 
+                          git pull https://github.com/vaidavisinganjude/nodepipeline.git
+                          npm install 
+                          sudo npm install -g pm2 
+                          pm2 restart index.js || pm2 start index.js
+                          exit 
+                          EOF 
+                       '''  
+                    }
+                }
+            } 
+        } 
+    }
+}
